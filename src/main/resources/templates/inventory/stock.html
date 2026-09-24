@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div th:replace="~{layout/main :: html}" th:with="content=~{::#stock-content}, pageTitle='Live Stock Inventory'">
+    <div id="stock-content" class="space-y-6">
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-black text-slate-900">Live Inventory &amp; Stock Breakdown</h1>
+                <p class="text-xs text-slate-500">Real-time garment warehouse stock filtered by style, color, size, lot, and finishing unit.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a th:href="@{/scanner(mode='INWARD')}" class="inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition">
+                    <i class="fa-solid fa-arrow-down mr-1"></i> Scan Inward
+                </a>
+                <a th:href="@{/scanner(mode='OUTWARD')}" class="inline-flex items-center px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow transition">
+                    <i class="fa-solid fa-arrow-up mr-1"></i> Scan Outward
+                </a>
+            </div>
+        </div>
+
+        <!-- Stock Summary Cards (Complete Sets vs Broken Loose Pieces) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total In Warehouse</span>
+                <div class="text-2xl font-black text-slate-900 mt-0.5" th:text="${summary.totalInWarehousePieces}">0</div>
+                <span class="text-[11px] text-slate-500">Physical garments scanned in</span>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Complete Ratio Sets</span>
+                <div class="text-2xl font-black text-emerald-600 mt-0.5" th:text="${summary.completeSetPieces}">0</div>
+                <span class="text-[11px] text-slate-500">In intact bundle packs</span>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Broken / Loose Pieces</span>
+                <div class="text-2xl font-black text-amber-600 mt-0.5" th:text="${summary.brokenLoosePieces}">0</div>
+                <span class="text-[11px] text-slate-500">Individual loose garments</span>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <form th:action="@{/stock}" method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+                <!-- Style Filter -->
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">Style</label>
+                    <select name="styleId" class="w-full bg-slate-50 border rounded-lg p-2 text-xs">
+                        <option value="">All Styles</option>
+                        <option th:each="st : ${styles}" th:value="${st.id}" th:text="${st.styleCode}"
+                                th:selected="${filter.styleId == st.id}"></option>
+                    </select>
+                </div>
+
+                <!-- Lot Filter -->
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">Cutting Lot</label>
+                    <select name="lotId" class="w-full bg-slate-50 border rounded-lg p-2 text-xs font-mono">
+                        <option value="">All Lots</option>
+                        <option th:each="lt : ${lots}" th:value="${lt.id}" th:text="${lt.lotNumber}"
+                                th:selected="${filter.lotId == lt.id}"></option>
+                    </select>
+                </div>
+
+                <!-- Color Filter -->
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">Color</label>
+                    <input type="text" name="color" th:value="${filter.color}" placeholder="Filter Color"
+                           class="w-full bg-slate-50 border rounded-lg p-2 text-xs">
+                </div>
+
+                <!-- Size Filter -->
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">Size</label>
+                    <input type="text" name="size" th:value="${filter.size}" placeholder="Filter Size"
+                           class="w-full bg-slate-50 border rounded-lg p-2 text-xs">
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">Status</label>
+                    <select name="status" class="w-full bg-slate-50 border rounded-lg p-2 text-xs">
+                        <option value="">All Statuses</option>
+                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st.displayName}"
+                                th:selected="${filter.status == st}"></option>
+                    </select>
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="flex items-end gap-1.5">
+                    <button type="submit" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs">
+                        Filter
+                    </button>
+                    <a th:href="@{/stock}" class="px-2.5 py-2 border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg text-xs" title="Reset">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Stock Items Table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-3.5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <span class="font-bold text-xs text-slate-700 uppercase tracking-wider">
+                    Stock Matching Criteria (<span th:text="${stockItems.size()}">0</span> pieces)
+                </span>
+            </div>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="min-w-full divide-y divide-slate-100 text-left text-xs">
+                    <thead class="bg-slate-50 text-[10px] text-slate-500 uppercase font-semibold sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th class="px-4 py-2.5">Piece Barcode</th>
+                            <th class="px-4 py-2.5">Parent Set Barcode</th>
+                            <th class="px-4 py-2.5">Lot No</th>
+                            <th class="px-4 py-2.5">Style</th>
+                            <th class="px-4 py-2.5">Color</th>
+                            <th class="px-4 py-2.5">Size</th>
+                            <th class="px-4 py-2.5">Bundle / Loose</th>
+                            <th class="px-4 py-2.5">Status</th>
+                            <th class="px-4 py-2.5">Finishing Unit</th>
+                            <th class="px-4 py-2.5">Customer</th>
+                            <th class="px-4 py-2.5 text-right">Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <tr th:each="item : ${stockItems}" class="hover:bg-slate-50 transition">
+                            <td class="px-4 py-2 font-mono font-bold text-slate-900" th:text="${item.barcode}">PC-001</td>
+                            <td class="px-4 py-2 font-mono text-indigo-600 font-bold"
+                                th:text="${item.parentSet != null ? item.parentSet.barcode : 'LOOSE PIECE'}">SET-001</td>
+                            <td class="px-4 py-2 font-mono" th:text="${item.cuttingLot.lotNumber}">LOT</td>
+                            <td class="px-4 py-2 font-bold text-slate-800" th:text="${item.cuttingLot.style.styleCode}">STY</td>
+                            <td class="px-4 py-2" th:text="${item.colorName}">Color</td>
+                            <td class="px-4 py-2 font-black text-slate-900" th:text="${item.sizeName}">32</td>
+                            <td class="px-4 py-2">
+                                <span th:if="${item.loose}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">LOOSE</span>
+                                <span th:unless="${item.loose}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">SET PIECE</span>
+                            </td>
+                            <td class="px-4 py-2">
+                                <span th:if="${item.status.name() == 'IN_WAREHOUSE'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">IN WAREHOUSE</span>
+                                <span th:if="${item.status.name() == 'DISPATCHED'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">DISPATCHED</span>
+                                <span th:if="${item.status.name() == 'PLANNED'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">PLANNED</span>
+                            </td>
+                            <td class="px-4 py-2 text-slate-500" th:text="${item.currentFinishingUnit != null ? item.currentFinishingUnit.unitName : '-'}">-</td>
+                            <td class="px-4 py-2 text-slate-500" th:text="${item.currentCustomer != null ? item.currentCustomer.customerName : '-'}">-</td>
+                            <td class="px-4 py-2 text-right text-slate-400 font-mono text-[11px]"
+                                th:text="${#temporals.format(item.updatedAt, 'yyyy-MM-dd HH:mm')}">Date</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(stockItems)}">
+                            <td colspan="11" class="px-6 py-8 text-center text-slate-400">
+                                No stock items matching your filter.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Garment Manufacturing WMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8 space-y-6">
+        <!-- Logo & Title -->
+        <div class="text-center space-y-2">
+            <div class="inline-flex p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-shirt text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-white">Garment WMS</h1>
+            <p class="text-sm text-slate-400">Apparel Warehouse &amp; Inventory Management</p>
+        </div>
+
+        <!-- Alert messages -->
+        <div th:if="${errorMessage}" class="p-3 bg-red-950/80 border border-red-500/50 rounded-lg text-xs text-red-200 flex items-center">
+            <i class="fa-solid fa-circle-exclamation mr-2 text-red-400"></i>
+            <span th:text="${errorMessage}">Invalid credentials</span>
+        </div>
+        <div th:if="${logoutMessage}" class="p-3 bg-emerald-950/80 border border-emerald-500/50 rounded-lg text-xs text-emerald-200 flex items-center">
+            <i class="fa-solid fa-circle-check mr-2 text-emerald-400"></i>
+            <span th:text="${logoutMessage}">Logged out</span>
+        </div>
+
+        <!-- Login Form -->
+        <form th:action="@{/login}" method="post" class="space-y-4">
+            <div>
+                <label for="username" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Username</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i class="fa-solid fa-user text-sm"></i>
+                    </span>
+                    <input type="text" id="username" name="username" required autofocus
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                           placeholder="Enter username">
+                </div>
+            </div>
+
+            <div>
+                <label for="password" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Password</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i class="fa-solid fa-lock text-sm"></i>
+                    </span>
+                    <input type="password" id="password" name="password" required
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                           placeholder="Enter password">
+                </div>
+            </div>
+
+            <button type="submit"
+                    class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-600/30 transition transform active:scale-98">
+                Sign In to Terminal <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+        </form>
+
+        <!-- Pre-seeded Quick Test Credentials Hint -->
+        <div class="pt-4 border-t border-slate-700/60 text-xs text-slate-400 space-y-1.5">
+            <div class="font-semibold text-slate-300 flex items-center">
+                <i class="fa-solid fa-key mr-1.5 text-indigo-400"></i> Pre-configured Test Accounts:
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+                <div class="bg-slate-900/80 p-2 rounded border border-slate-700 text-center cursor-pointer hover:border-indigo-400"
+                     onclick="document.getElementById('username').value='master'; document.getElementById('password').value='master123';">
+                    <div class="text-indigo-300 font-bold">master</div>
+                    <div class="text-slate-400">master123</div>
+                    <span class="text-[9px] text-slate-500 block">Master Admin</span>
+                </div>
+                <div class="bg-slate-900/80 p-2 rounded border border-slate-700 text-center cursor-pointer hover:border-indigo-400"
+                     onclick="document.getElementById('username').value='admin'; document.getElementById('password').value='admin123';">
+                    <div class="text-emerald-300 font-bold">admin</div>
+                    <div class="text-slate-400">admin123</div>
+                    <span class="text-[9px] text-slate-500 block">Operations</span>
+                </div>
+                <div class="bg-slate-900/80 p-2 rounded border border-slate-700 text-center cursor-pointer hover:border-indigo-400"
+                     onclick="document.getElementById('username').value='operator'; document.getElementById('password').value='operator123';">
+                    <div class="text-amber-300 font-bold">operator</div>
+                    <div class="text-slate-400">operator123</div>
+                    <span class="text-[9px] text-slate-500 block">Scanner Floor</span>
+                </div>
+            </div>
+            <p class="text-[10px] text-center text-slate-400 pt-1">Click any tile above to auto-fill credentials</p>
+        </div>
+    </div>
+
+</body>
+</html>

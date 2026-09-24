@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div th:replace="~{layout/main :: html}" th:with="content=~{::#sizeset-form-content}, pageTitle='Create Ratio Size Set'">
+    <div id="sizeset-form-content" class="max-w-2xl mx-auto space-y-6">
+
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-black text-slate-900">Define Ratio Size Set</h1>
+                <p class="text-xs text-slate-500">Configure garment piece distribution per master carton / pack.</p>
+            </div>
+            <a th:href="@{/sizesets}" class="text-xs font-bold text-slate-500 hover:text-slate-800">
+                &larr; Back to Sets
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <form th:action="@{/sizesets/create}" method="post" id="sizeset-form" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Set Name *</label>
+                    <input type="text" name="setName" required placeholder="e.g. Ratio 12 Set (30-36) or Summer Polo 6-Pack"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Description / Notes</label>
+                    <input type="text" name="description" placeholder="e.g. Standard 12-piece trouser pack (1-3-3-3-2)"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- Dynamic Size Breakdown Table -->
+                <div class="pt-2 border-t border-slate-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Size Assortment Breakdown</label>
+                        <button type="button" id="add-size-row-btn"
+                                class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center">
+                            <i class="fa-solid fa-plus-circle mr-1"></i> Add Size
+                        </button>
+                    </div>
+
+                    <div id="size-rows-container" class="space-y-2">
+                        <!-- Default Rows -->
+                        <div class="size-row flex items-center gap-3">
+                            <input type="text" name="sizeName[]" value="30" required placeholder="Size (e.g. 30, S)"
+                                   class="w-1/2 px-3 py-2 border rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <input type="number" name="ratioCount[]" value="1" min="1" required placeholder="Ratio Count"
+                                   class="ratio-input w-1/3 px-3 py-2 border rounded-xl text-xs font-bold text-center focus:ring-2 focus:ring-indigo-500">
+                            <button type="button" onclick="removeRow(this)" class="text-slate-400 hover:text-red-500 p-2">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <div class="size-row flex items-center gap-3">
+                            <input type="text" name="sizeName[]" value="32" required placeholder="Size"
+                                   class="w-1/2 px-3 py-2 border rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <input type="number" name="ratioCount[]" value="3" min="1" required
+                                   class="ratio-input w-1/3 px-3 py-2 border rounded-xl text-xs font-bold text-center focus:ring-2 focus:ring-indigo-500">
+                            <button type="button" onclick="removeRow(this)" class="text-slate-400 hover:text-red-500 p-2">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <div class="size-row flex items-center gap-3">
+                            <input type="text" name="sizeName[]" value="34" required placeholder="Size"
+                                   class="w-1/2 px-3 py-2 border rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <input type="number" name="ratioCount[]" value="3" min="1" required
+                                   class="ratio-input w-1/3 px-3 py-2 border rounded-xl text-xs font-bold text-center focus:ring-2 focus:ring-indigo-500">
+                            <button type="button" onclick="removeRow(this)" class="text-slate-400 hover:text-red-500 p-2">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <div class="size-row flex items-center gap-3">
+                            <input type="text" name="sizeName[]" value="36" required placeholder="Size"
+                                   class="w-1/2 px-3 py-2 border rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <input type="number" name="ratioCount[]" value="2" min="1" required
+                                   class="ratio-input w-1/3 px-3 py-2 border rounded-xl text-xs font-bold text-center focus:ring-2 focus:ring-indigo-500">
+                            <button type="button" onclick="removeRow(this)" class="text-slate-400 hover:text-red-500 p-2">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Total Pieces in Set Calculator Display -->
+                    <div class="mt-4 p-3 bg-indigo-50 rounded-xl flex items-center justify-between text-xs text-indigo-900 border border-indigo-100">
+                        <span class="font-bold">Total Ratio Pieces per Set:</span>
+                        <span id="total-set-pieces-display" class="font-extrabold text-sm text-indigo-700">9 pcs</span>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t">
+                    <a th:href="@{/sizesets}" class="px-5 py-2.5 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50">Cancel</a>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow">Save Ratio Size Set</button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            function updateTotal() {
+                let sum = 0;
+                document.querySelectorAll('.ratio-input').forEach(input => {
+                    const val = parseInt(input.value) || 0;
+                    sum += val;
+                });
+                document.getElementById('total-set-pieces-display').textContent = sum + ' pcs';
+            }
+
+            function removeRow(btn) {
+                const rows = document.querySelectorAll('.size-row');
+                if (rows.length > 1) {
+                    btn.closest('.size-row').remove();
+                    updateTotal();
+                } else {
+                    alert("A size set must contain at least one size.");
+                }
+            }
+
+            document.getElementById('add-size-row-btn').addEventListener('click', () => {
+                const container = document.getElementById('size-rows-container');
+                const row = document.createElement('div');
+                row.className = 'size-row flex items-center gap-3';
+                row.innerHTML = `
+                    <input type="text" name="sizeName[]" required placeholder="Size (e.g. XL)"
+                           class="w-1/2 px-3 py-2 border rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                    <input type="number" name="ratioCount[]" value="1" min="1" required
+                           class="ratio-input w-1/3 px-3 py-2 border rounded-xl text-xs font-bold text-center focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="removeRow(this)" class="text-slate-400 hover:text-red-500 p-2">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+                row.querySelector('.ratio-input').addEventListener('input', updateTotal);
+                updateTotal();
+            });
+
+            document.querySelectorAll('.ratio-input').forEach(input => {
+                input.addEventListener('input', updateTotal);
+            });
+            updateTotal();
+        </script>
+
+    </div>
+</div>
+</body>
+</html>

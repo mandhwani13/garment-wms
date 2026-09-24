@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div th:replace="~{layout/main :: html}" th:with="content=~{::#lot-create-content}, pageTitle='Create Cutting Lot & Issue Barcodes'">
+    <div id="lot-create-content" class="max-w-3xl mx-auto space-y-6">
+
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-black text-slate-900">Create Cutting Lot &amp; Issue Barcodes</h1>
+                <p class="text-xs text-slate-500">Automatically computes complete ratio sets per color, isolates loose pieces, and issues relational barcodes.</p>
+            </div>
+            <a th:href="@{/lots}" class="text-xs font-bold text-slate-500 hover:text-slate-800">
+                &larr; Back to Lots
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <form th:action="@{/lots/create}" method="post" id="lot-form" class="space-y-6">
+                <!-- Master Selection Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Lot Number *</label>
+                        <input type="text" name="lotNumber" required placeholder="e.g. LOT-2026-002"
+                               class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs uppercase font-mono font-bold focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Style / Design *</label>
+                        <select name="styleId" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- Select Style --</option>
+                            <option th:each="st : ${styles}" th:value="${st.id}" th:text="${st.styleCode + ' - ' + st.designName}"></option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Size Set Assortment *</label>
+                        <select name="sizeSetId" id="size-set-select" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <option value="" data-ratio="0">-- Select Size Set --</option>
+                            <option th:each="ss : ${sizeSets}" th:value="${ss.id}" th:data-ratio="${ss.totalRatioPieces}"
+                                    th:text="${ss.setName + ' (' + ss.totalRatioPieces + ' pcs/set)'}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Color Breakdown & Ratio Allocation -->
+                <div class="pt-4 border-t border-slate-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Color Breakdown &amp; Piece Quantities</h3>
+                            <p class="text-[11px] text-slate-400">Complete bundle sets are calculated automatically from your selected ratio size set.</p>
+                        </div>
+                        <button type="button" id="add-color-btn" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center">
+                            <i class="fa-solid fa-plus-circle mr-1"></i> Add Color
+                        </button>
+                    </div>
+
+                    <div id="color-rows-container" class="space-y-3">
+                        <!-- Initial Color Row -->
+                        <div class="color-row bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap items-center gap-3">
+                            <div class="flex-1 min-w-[140px]">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Color Name</label>
+                                <input type="text" name="colorName[]" value="Navy Blue" required placeholder="e.g. Navy Blue"
+                                       class="w-full px-3 py-2 border rounded-lg text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="w-28">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total Pieces</label>
+                                <input type="number" name="colorPieces[]" value="48" min="1" required
+                                       class="color-pieces-input w-full px-3 py-2 border rounded-lg text-xs font-bold text-center focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="w-36 text-center">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Calculated Sets</label>
+                                <div class="calculated-sets-badge py-2 px-2 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-extrabold">4 Sets (48 pcs)</div>
+                            </div>
+                            <div class="w-24 text-center">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Loose</label>
+                                <div class="loose-badge py-2 px-2 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold">0 pcs</div>
+                            </div>
+                            <div class="pt-4">
+                                <button type="button" onclick="removeColorRow(this)" class="text-slate-400 hover:text-red-500 p-1">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lot Total Live Summary -->
+                    <div class="mt-4 p-4 bg-indigo-900 text-white rounded-xl flex flex-wrap items-center justify-between text-xs gap-3">
+                        <div>
+                            <span class="text-indigo-300 block text-[10px] uppercase font-bold">Total Planned Pieces</span>
+                            <span id="grand-total-pieces" class="text-xl font-black text-white">48 pcs</span>
+                        </div>
+                        <div>
+                            <span class="text-indigo-300 block text-[10px] uppercase font-bold">Complete Ratio Bundles</span>
+                            <span id="grand-total-sets" class="text-xl font-black text-emerald-400">4 Sets</span>
+                        </div>
+                        <div>
+                            <span class="text-indigo-300 block text-[10px] uppercase font-bold">Loose Individual Pieces</span>
+                            <span id="grand-total-loose" class="text-xl font-black text-amber-300">0 pcs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t">
+                    <a th:href="@{/lots}" class="px-5 py-2.5 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50">Cancel</a>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30">
+                        <i class="fa-solid fa-barcode mr-1.5"></i> Generate Lot &amp; Barcodes
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            function getRatioPerSet() {
+                const select = document.getElementById('size-set-select');
+                const opt = select.options[select.selectedIndex];
+                return parseInt(opt.getAttribute('data-ratio')) || 12;
+            }
+
+            function recalculateAll() {
+                const ratioPerSet = getRatioPerSet();
+                let sumPieces = 0;
+                let sumSets = 0;
+                let sumLoose = 0;
+
+                document.querySelectorAll('.color-row').forEach(row => {
+                    const piecesInput = row.querySelector('.color-pieces-input');
+                    const pieces = parseInt(piecesInput.value) || 0;
+                    sumPieces += pieces;
+
+                    let sets = ratioPerSet > 0 ? Math.floor(pieces / ratioPerSet) : 0;
+                    let loose = ratioPerSet > 0 ? (pieces % ratioPerSet) : pieces;
+
+                    sumSets += sets;
+                    sumLoose += loose;
+
+                    const setBadge = row.querySelector('.calculated-sets-badge');
+                    const looseBadge = row.querySelector('.loose-badge');
+
+                    setBadge.textContent = sets + ' Sets (' + (sets * ratioPerSet) + ' pcs)';
+                    looseBadge.textContent = loose + ' pcs';
+                });
+
+                document.getElementById('grand-total-pieces').textContent = sumPieces + ' pcs';
+                document.getElementById('grand-total-sets').textContent = sumSets + ' Sets';
+                document.getElementById('grand-total-loose').textContent = sumLoose + ' pcs';
+            }
+
+            function removeColorRow(btn) {
+                const rows = document.querySelectorAll('.color-row');
+                if (rows.length > 1) {
+                    btn.closest('.color-row').remove();
+                    recalculateAll();
+                } else {
+                    alert("A cutting lot must contain at least one color allocation.");
+                }
+            }
+
+            document.getElementById('add-color-btn').addEventListener('click', () => {
+                const container = document.getElementById('color-rows-container');
+                const row = document.createElement('div');
+                row.className = 'color-row bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap items-center gap-3';
+                row.innerHTML = `
+                    <div class="flex-1 min-w-[140px]">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Color Name</label>
+                        <input type="text" name="colorName[]" required placeholder="Color (e.g. Olive Green)"
+                               class="w-full px-3 py-2 border rounded-lg text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="w-28">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total Pieces</label>
+                        <input type="number" name="colorPieces[]" value="36" min="1" required
+                               class="color-pieces-input w-full px-3 py-2 border rounded-lg text-xs font-bold text-center focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="w-36 text-center">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Calculated Sets</label>
+                        <div class="calculated-sets-badge py-2 px-2 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-extrabold">0 Sets</div>
+                    </div>
+                    <div class="w-24 text-center">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Loose</label>
+                        <div class="loose-badge py-2 px-2 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold">0 pcs</div>
+                    </div>
+                    <div class="pt-4">
+                        <button type="button" onclick="removeColorRow(this)" class="text-slate-400 hover:text-red-500 p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+                row.querySelector('.color-pieces-input').addEventListener('input', recalculateAll);
+                recalculateAll();
+            });
+
+            document.getElementById('size-set-select').addEventListener('change', recalculateAll);
+            document.querySelectorAll('.color-pieces-input').forEach(inp => inp.addEventListener('input', recalculateAll));
+            recalculateAll();
+        </script>
+
+    </div>
+</div>
+</body>
+</html>

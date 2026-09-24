@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div th:replace="~{layout/main :: html}" th:with="content=~{::#lot-view-content}, pageTitle='Cutting Lot ' + ${lot.lotNumber}">
+    <div id="lot-view-content" class="space-y-6">
+
+        <!-- Top Header & Breadcrumb -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <a th:href="@{/lots}" class="text-xs font-bold text-indigo-600 hover:underline">&larr; Cutting Lots</a>
+                    <span class="text-slate-300">/</span>
+                    <span class="text-xs font-mono font-bold text-slate-500" th:text="${lot.lotNumber}">LOT-01</span>
+                </div>
+                <h1 class="text-2xl font-black text-slate-900 mt-1 flex items-center gap-3">
+                    <span th:text="${lot.lotNumber}">LOT-2026-001</span>
+                    <span class="px-3 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800" th:text="${lot.status}">PLANNED</span>
+                </h1>
+            </div>
+
+            <!-- Dedicated Print & Export Toolbar -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Option A: BarTender CSV Export -->
+                <a th:href="@{/labels/export/bartender/{lotId}(lotId=${lot.id})}"
+                   class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition"
+                   title="Export CSV formatted specifically for BarTender Commander & Database Connection">
+                    <i class="fa-solid fa-file-csv mr-1.5 text-sm"></i> Export for BarTender
+                </a>
+
+                <!-- Option B: Browser Print Preview -->
+                <a th:href="@{/labels/preview/{lotId}(lotId=${lot.id})}"
+                   class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition"
+                   title="Open browser print preview with exact millimeter dimensions and ZXing barcode rendering">
+                    <i class="fa-solid fa-print mr-1.5 text-sm"></i> Print Browser Preview
+                </a>
+
+                <!-- Option C: TSC TSPL Command File -->
+                <a th:href="@{/labels/export/tspl/{lotId}(lotId=${lot.id})}"
+                   class="inline-flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl shadow transition"
+                   title="Download native TSC thermal printer language script (.prn / .txt)">
+                    <i class="fa-solid fa-terminal mr-1.5 text-sm"></i> Download TSPL (.prn)
+                </a>
+            </div>
+        </div>
+
+        <!-- Lot Metadata & Status Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                <span class="text-[10px] uppercase font-bold text-slate-400">Style / Design</span>
+                <div class="text-sm font-bold text-slate-900 mt-0.5" th:text="${lot.style.styleCode}">STY-101</div>
+                <div class="text-xs text-slate-500 truncate" th:text="${lot.style.designName}">Oxford Shirt</div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                <span class="text-[10px] uppercase font-bold text-slate-400">Assigned Size Set</span>
+                <div class="text-sm font-bold text-indigo-700 mt-0.5" th:text="${lot.sizeSet.setName}">Ratio 12</div>
+                <div class="text-xs text-slate-500" th:text="${lot.sizeSet.totalRatioPieces + ' pcs per ratio bundle'}">12 pcs</div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+                <span class="text-[10px] uppercase font-bold text-slate-400">Total Pieces</span>
+                <div class="text-2xl font-black text-slate-900 mt-0.5" th:text="${lot.totalPieces}">84</div>
+                <div class="text-[11px] text-slate-500" th:text="${bundles.size() + ' bundles, ' + pieces.size() + ' pcs'}">7 bundles</div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                <span class="text-[10px] uppercase font-bold text-slate-400">Live Warehouse Status</span>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-xs">
+                        <span th:text="${inWarehouseCount}">0</span> In Whs
+                    </span>
+                    <span class="px-2 py-0.5 bg-blue-100 text-blue-800 font-bold rounded text-xs">
+                        <span th:text="${dispatchedCount}">0</span> Disp
+                    </span>
+                    <span class="px-2 py-0.5 bg-slate-100 text-slate-700 font-bold rounded text-xs">
+                        <span th:text="${plannedCount}">84</span> Plan
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Breakdown Table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-3.5 border-b border-slate-100 bg-slate-50 font-bold text-xs text-slate-700 uppercase tracking-wider">
+                Color Assortment &amp; Ratio Distribution
+            </div>
+            <table class="min-w-full divide-y divide-slate-100 text-left text-xs">
+                <thead class="bg-slate-50 text-[11px] text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="px-6 py-2.5">Color Name</th>
+                        <th class="px-6 py-2.5 text-right">Allocated Pieces</th>
+                        <th class="px-6 py-2.5 text-center">Complete Ratio Bundles</th>
+                        <th class="px-6 py-2.5 text-right">Loose Pieces</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                    <tr th:each="c : ${colors}">
+                        <td class="px-6 py-3 font-bold text-slate-900" th:text="${c.colorName}">Navy Blue</td>
+                        <td class="px-6 py-3 text-right font-extrabold text-slate-800" th:text="${c.piecesAllocated}">48</td>
+                        <td class="px-6 py-3 text-center">
+                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full font-bold text-xs">
+                                <span th:text="${c.calculatedSets}">4</span> Bundles
+                            </span>
+                        </td>
+                        <td class="px-6 py-3 text-right font-mono" th:text="${c.loosePieces}">0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Set Bundles List (Parent Barcodes) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-3.5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <h3 class="font-bold text-xs text-slate-700 uppercase tracking-wider">
+                    Parent Set Bundles (<span th:text="${bundles.size()}">0</span>)
+                </h3>
+                <span class="text-[11px] text-slate-400">Scan these bundle barcodes to inward / outward whole packs</span>
+            </div>
+            <div class="overflow-x-auto max-h-72">
+                <table class="min-w-full divide-y divide-slate-100 text-left text-xs">
+                    <thead class="bg-slate-50 text-[10px] text-slate-500 uppercase font-semibold">
+                        <tr>
+                            <th class="px-4 py-2">Set Index</th>
+                            <th class="px-4 py-2">Bundle Barcode</th>
+                            <th class="px-4 py-2">Color</th>
+                            <th class="px-4 py-2">Status</th>
+                            <th class="px-4 py-2">Finishing Unit</th>
+                            <th class="px-4 py-2">Customer</th>
+                            <th class="px-4 py-2 text-right">Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <tr th:each="b : ${bundles}" class="hover:bg-slate-50">
+                            <td class="px-4 py-2.5 font-bold text-slate-900" th:text="'SET #' + ${b.setIndex}">SET #1</td>
+                            <td class="px-4 py-2.5 font-mono font-bold text-indigo-600" th:text="${b.barcode}">SET-LOT-001</td>
+                            <td class="px-4 py-2.5" th:text="${b.colorName}">Navy Blue</td>
+                            <td class="px-4 py-2.5">
+                                <span th:if="${b.status.name() == 'IN_WAREHOUSE'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">IN WAREHOUSE</span>
+                                <span th:if="${b.status.name() == 'DISPATCHED'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">DISPATCHED</span>
+                                <span th:if="${b.status.name() == 'PLANNED'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">PLANNED</span>
+                            </td>
+                            <td class="px-4 py-2.5 text-slate-500" th:text="${b.currentFinishingUnit != null ? b.currentFinishingUnit.unitName : '-'}">-</td>
+                            <td class="px-4 py-2.5 text-slate-500" th:text="${b.currentCustomer != null ? b.currentCustomer.customerName : '-'}">-</td>
+                            <td class="px-4 py-2.5 text-right text-slate-400 font-mono text-[11px]" th:text="${#temporals.format(b.updatedAt, 'HH:mm:ss')}">Time</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Child Single Pieces (Individual Garment Pieces) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-3.5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <h3 class="font-bold text-xs text-slate-700 uppercase tracking-wider">
+                    Single Garment Pieces (<span th:text="${pieces.size()}">0</span>)
+                </h3>
+                <span class="text-[11px] text-slate-400">Attached individual piece tags linked to parent sets</span>
+            </div>
+            <div class="overflow-x-auto max-h-80">
+                <table class="min-w-full divide-y divide-slate-100 text-left text-xs">
+                    <thead class="bg-slate-50 text-[10px] text-slate-500 uppercase font-semibold">
+                        <tr>
+                            <th class="px-4 py-2">Piece Barcode</th>
+                            <th class="px-4 py-2">Parent Set</th>
+                            <th class="px-4 py-2">Color</th>
+                            <th class="px-4 py-2">Size</th>
+                            <th class="px-4 py-2">Item Type</th>
+                            <th class="px-4 py-2">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <tr th:each="p : ${pieces}" class="hover:bg-slate-50">
+                            <td class="px-4 py-2 font-mono font-bold text-slate-800" th:text="${p.barcode}">PC-LOT-001</td>
+                            <td class="px-4 py-2 font-mono text-indigo-600 font-semibold"
+                                th:text="${p.parentSet != null ? p.parentSet.barcode : 'LOOSE'}">SET-001</td>
+                            <td class="px-4 py-2" th:text="${p.colorName}">Navy Blue</td>
+                            <td class="px-4 py-2 font-bold text-slate-900" th:text="${p.sizeName}">32</td>
+                            <td class="px-4 py-2">
+                                <span th:if="${p.loose}" class="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-bold">LOOSE PIECE</span>
+                                <span th:unless="${p.loose}" class="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px] font-bold">SET PIECE</span>
+                            </td>
+                            <td class="px-4 py-2">
+                                <span th:if="${p.status.name() == 'IN_WAREHOUSE'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">IN WAREHOUSE</span>
+                                <span th:if="${p.status.name() == 'DISPATCHED'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">DISPATCHED</span>
+                                <span th:if="${p.status.name() == 'PLANNED'}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">PLANNED</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

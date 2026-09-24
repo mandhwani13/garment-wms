@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div th:replace="~{layout/main :: html}" th:with="content=~{::#customers-content}, pageTitle='Customers / Buyers'">
+    <div id="customers-content" class="space-y-6">
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-black text-slate-900">Customers &amp; Retail Destination Master</h1>
+                <p class="text-xs text-slate-500">Retail chains, e-commerce fulfillment hubs, and distributor destinations for outward dispatches.</p>
+            </div>
+            <button onclick="document.getElementById('modal-add-customer').classList.remove('hidden')"
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition">
+                <i class="fa-solid fa-plus mr-1.5"></i> Add Customer
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="px-6 py-3.5">Customer Code</th>
+                        <th class="px-6 py-3.5">Customer / Brand Name</th>
+                        <th class="px-6 py-3.5">Contact Person</th>
+                        <th class="px-6 py-3.5">Phone</th>
+                        <th class="px-6 py-3.5">Delivery Address</th>
+                        <th class="px-6 py-3.5 text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                    <tr th:each="c : ${customers}" class="hover:bg-slate-50 transition">
+                        <td class="px-6 py-3.5 font-mono font-bold text-indigo-700" th:text="${c.customerCode}">CUST-01</td>
+                        <td class="px-6 py-3.5 font-bold text-slate-900" th:text="${c.customerName}">Nordic Retail Brands</td>
+                        <td class="px-6 py-3.5" th:text="${c.contactPerson}">Contact</td>
+                        <td class="px-6 py-3.5 font-mono text-[11px]" th:text="${c.phone}">+91 99999</td>
+                        <td class="px-6 py-3.5 text-slate-500 text-xs" th:text="${c.address}">Address</td>
+                        <td class="px-6 py-3.5 text-right">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">ACTIVE</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(customers)}">
+                        <td colspan="6" class="px-6 py-8 text-center text-slate-400">
+                            No customers registered yet. Click "Add Customer" above.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal: Add Customer -->
+        <div id="modal-add-customer" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-900">Add Customer</h3>
+                    <button onclick="document.getElementById('modal-add-customer').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form th:action="@{/parties/customers/create}" th:object="${newCustomer}" method="post" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Customer Code *</label>
+                        <input type="text" th:field="*{customerCode}" required placeholder="e.g. CUST-ZARA-IN"
+                               class="w-full px-3 py-2 border rounded-xl text-xs uppercase font-mono focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Customer / Organization Name *</label>
+                        <input type="text" th:field="*{customerName}" required placeholder="e.g. Reliance Trends DC"
+                               class="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Contact Person</label>
+                        <input type="text" th:field="*{contactPerson}" placeholder="Logistics Manager"
+                               class="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Phone</label>
+                        <input type="text" th:field="*{phone}" placeholder="+91 ..."
+                               class="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Dispatch / Delivery Address</label>
+                        <textarea th:field="*{address}" rows="2" placeholder="Warehouse / Store destination"
+                                  class="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2 border-t">
+                        <button type="button" onclick="document.getElementById('modal-add-customer').classList.add('hidden')"
+                                class="px-4 py-2 border text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50">Cancel</button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl">Save Customer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

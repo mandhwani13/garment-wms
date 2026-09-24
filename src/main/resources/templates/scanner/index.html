@@ -1,161 +1,164 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-</head>
-<body>
-<div th:replace="~{layout/main :: html}" th:with="content=~{::#scanner-content}, pageTitle='Warehouse Floor Mobile Scanner'">
-    <div id="scanner-content" class="space-y-6 max-w-4xl mx-auto">
+<head th:replace="~{layout/main :: header_head('Mobile Scanner')}"></head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+    <header th:replace="~{layout/main :: navbar}"></header>
+    <div th:replace="~{layout/main :: alerts}"></div>
 
-        <!-- Mobile Header Bar -->
-        <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-            <div class="flex items-center space-x-3">
-                <div class="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl">
-                    <i class="fa-solid fa-qrcode text-2xl"></i>
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div id="scanner-content" class="space-y-6 max-w-4xl mx-auto">
+
+            <!-- Mobile Header Bar -->
+            <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl">
+                        <i class="fa-solid fa-qrcode text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-black text-slate-900 leading-tight">Mobile Camera Scanner</h1>
+                        <p class="text-xs text-slate-500">Html5-QRCode camera scanner &amp; laser gun input</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-lg font-black text-slate-900 leading-tight">Mobile Camera Scanner</h1>
-                    <p class="text-xs text-slate-500">Html5-QRCode camera scanner &amp; laser gun input</p>
+
+                <!-- Live Session Counters -->
+                <div class="flex items-center space-x-3">
+                    <div class="text-right">
+                        <span class="block text-[10px] uppercase font-bold text-slate-400">Scans</span>
+                        <span id="scan-counter" class="text-lg font-black text-indigo-600">0</span>
+                    </div>
+                    <div class="text-right border-l pl-3 border-slate-200">
+                        <span class="block text-[10px] uppercase font-bold text-slate-400">Pieces</span>
+                        <span id="pieces-counter" class="text-lg font-black text-emerald-600">0</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Live Session Counters -->
-            <div class="flex items-center space-x-3">
-                <div class="text-right">
-                    <span class="block text-[10px] uppercase font-bold text-slate-400">Scans</span>
-                    <span id="scan-counter" class="text-lg font-black text-indigo-600">0</span>
+            <!-- Alert Notification Banner -->
+            <div id="alert-banner" class="hidden p-3 rounded-xl text-white text-xs font-bold shadow-md transition"></div>
+
+            <!-- Operation Mode & Parameters Card -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Operation Mode Switcher -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Operation Mode</label>
+                        <select id="mode-select" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500">
+                            <option value="INWARD" th:selected="${mode == 'INWARD'}">🟢 INWARD (Finishing Unit &rarr; Warehouse)</option>
+                            <option value="OUTWARD" th:selected="${mode == 'OUTWARD'}">🟠 OUTWARD (Warehouse &rarr; Customer Dispatch)</option>
+                        </select>
+                    </div>
+
+                    <!-- Source: Finishing Unit (for INWARD) -->
+                    <div id="finishing-unit-container">
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Source Finishing Unit</label>
+                        <select id="finishing-unit-select" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- Select Finishing Unit --</option>
+                            <option th:each="unit : ${finishingUnits}" th:value="${unit.id}" th:text="${unit.unitName + ' (' + unit.unitCode + ')'}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Destination: Customer (for OUTWARD) -->
+                    <div id="customer-container" class="hidden">
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Destination Customer *</label>
+                        <select id="customer-select" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-amber-500">
+                            <option value="">-- Select Customer for Dispatch --</option>
+                            <option th:each="cust : ${customers}" th:value="${cust.id}" th:text="${cust.customerName + ' (' + cust.customerCode + ')'}"></option>
+                        </select>
+                    </div>
                 </div>
-                <div class="text-right border-l pl-3 border-slate-200">
-                    <span class="block text-[10px] uppercase font-bold text-slate-400">Pieces</span>
-                    <span id="pieces-counter" class="text-lg font-black text-emerald-600">0</span>
+
+                <!-- Optional Tracking Ref & Notes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Reference No / DC / Challan</label>
+                        <input type="text" id="reference-no" placeholder="e.g. DC-9982 / INV-4401"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Remarks / Quality Notes</label>
+                        <input type="text" id="remarks-input" placeholder="e.g. Quality check passed"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800">
+                    </div>
                 </div>
             </div>
+
+            <!-- Camera Scanner Viewport -->
+            <div class="bg-slate-900 rounded-2xl p-4 shadow-xl border border-slate-800 text-center space-y-4">
+                <div class="flex items-center justify-between text-xs text-slate-400 px-2">
+                    <span class="flex items-center"><i class="fa-solid fa-video mr-1.5 text-indigo-400"></i> Rear Camera Feed</span>
+                    <span class="text-[11px] text-slate-500 font-mono">Continuous Scan Active</span>
+                </div>
+
+                <!-- Html5-QRCode Camera Mount Point -->
+                <div class="scanner-viewport mx-auto max-w-sm rounded-xl overflow-hidden min-h-[220px] flex items-center justify-center border-2 border-indigo-500/40 relative">
+                    <div id="reader" class="w-full"></div>
+                    <div id="scanner-laser" class="scanner-laser hidden"></div>
+                </div>
+
+                <!-- Camera Controls -->
+                <div class="flex items-center justify-center gap-3">
+                    <button type="button" id="btn-start-camera"
+                            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-lg transition flex items-center">
+                        <i class="fa-solid fa-camera mr-2"></i> Start Camera Scanner
+                    </button>
+                    <button type="button" id="btn-stop-camera"
+                            class="hidden px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs shadow-lg transition flex items-center">
+                        <i class="fa-solid fa-stop mr-2"></i> Stop Camera
+                    </button>
+                </div>
+            </div>
+
+            <!-- Laser / Bluetooth Barcode Gun Input Fallback -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-barcode mr-1.5 text-indigo-600"></i> Laser / Bluetooth Gun Scan Input
+                </label>
+                <div class="flex gap-2">
+                    <input type="text" id="manual-barcode-input" autofocus
+                           placeholder="Scan or enter barcode (SET-... or PC-...) and press Enter"
+                           class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 uppercase">
+                    <button type="button" id="manual-submit-btn"
+                            class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl shadow transition">
+                        Submit Scan
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1.5">Compatible with Zebra, Honeywell, Netum handheld Bluetooth laser barcode scanners.</p>
+            </div>
+
+            <!-- Real-Time Session Scan Log -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Active Session Scan History</h3>
+                    <span class="text-[11px] text-slate-400">Audio chime &amp; haptic confirmation</span>
+                </div>
+                <div class="overflow-x-auto max-h-72">
+                    <table class="min-w-full divide-y divide-slate-100 text-left">
+                        <thead class="bg-slate-50 text-[10px] text-slate-500 uppercase font-semibold">
+                            <tr>
+                                <th class="px-3 py-2">Barcode</th>
+                                <th class="px-3 py-2">Status</th>
+                                <th class="px-3 py-2">Style</th>
+                                <th class="px-3 py-2">Color</th>
+                                <th class="px-3 py-2">Size</th>
+                                <th class="px-3 py-2 text-right">Pcs</th>
+                                <th class="px-3 py-2 text-right">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scan-log-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically by scanner-app.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Embedded scripts for offline & mobile operation -->
+            <script th:src="@{/js/html5-qrcode.min.js}"></script>
+            <script th:src="@{/js/sound-fx.js}"></script>
+            <script th:src="@{/js/scanner-app.js}"></script>
+
         </div>
+    </main>
 
-        <!-- Alert Notification Banner -->
-        <div id="alert-banner" class="hidden p-3 rounded-xl text-white text-xs font-bold shadow-md transition"></div>
-
-        <!-- Operation Mode & Parameters Card -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <!-- Operation Mode Switcher -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Operation Mode</label>
-                    <select id="mode-select" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500">
-                        <option value="INWARD" th:selected="${mode == 'INWARD'}">🟢 INWARD (Finishing Unit &rarr; Warehouse)</option>
-                        <option value="OUTWARD" th:selected="${mode == 'OUTWARD'}">🟠 OUTWARD (Warehouse &rarr; Customer Dispatch)</option>
-                    </select>
-                </div>
-
-                <!-- Source: Finishing Unit (for INWARD) -->
-                <div id="finishing-unit-container">
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Source Finishing Unit</label>
-                    <select id="finishing-unit-select" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500">
-                        <option value="">-- Select Finishing Unit --</option>
-                        <option th:each="unit : ${finishingUnits}" th:value="${unit.id}" th:text="${unit.unitName + ' (' + unit.unitCode + ')'}"></option>
-                    </select>
-                </div>
-
-                <!-- Destination: Customer (for OUTWARD) -->
-                <div id="customer-container" class="hidden">
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Destination Customer *</label>
-                    <select id="customer-select" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-amber-500">
-                        <option value="">-- Select Customer for Dispatch --</option>
-                        <option th:each="cust : ${customers}" th:value="${cust.id}" th:text="${cust.customerName + ' (' + cust.customerCode + ')'}"></option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Optional Tracking Ref & Notes -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Reference No / DC / Challan</label>
-                    <input type="text" id="reference-no" placeholder="e.g. DC-9982 / INV-4401"
-                           class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-1">Remarks / Quality Notes</label>
-                    <input type="text" id="remarks-input" placeholder="e.g. Quality check passed"
-                           class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800">
-                </div>
-            </div>
-        </div>
-
-        <!-- Camera Scanner Viewport -->
-        <div class="bg-slate-900 rounded-2xl p-4 shadow-xl border border-slate-800 text-center space-y-4">
-            <div class="flex items-center justify-between text-xs text-slate-400 px-2">
-                <span class="flex items-center"><i class="fa-solid fa-video mr-1.5 text-indigo-400"></i> Rear Camera Feed</span>
-                <span class="text-[11px] text-slate-500 font-mono">Continuous Scan Active</span>
-            </div>
-
-            <!-- Html5-QRCode Camera Mount Point -->
-            <div class="scanner-viewport mx-auto max-w-sm rounded-xl overflow-hidden min-h-[220px] flex items-center justify-center border-2 border-indigo-500/40 relative">
-                <div id="reader" class="w-full"></div>
-                <div id="scanner-laser" class="scanner-laser hidden"></div>
-            </div>
-
-            <!-- Camera Controls -->
-            <div class="flex items-center justify-center gap-3">
-                <button type="button" id="btn-start-camera"
-                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-lg transition flex items-center">
-                    <i class="fa-solid fa-camera mr-2"></i> Start Camera Scanner
-                </button>
-                <button type="button" id="btn-stop-camera"
-                        class="hidden px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs shadow-lg transition flex items-center">
-                    <i class="fa-solid fa-stop mr-2"></i> Stop Camera
-                </button>
-            </div>
-        </div>
-
-        <!-- Laser / Bluetooth Barcode Gun Input Fallback -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                <i class="fa-solid fa-barcode mr-1.5 text-indigo-600"></i> Laser / Bluetooth Gun Scan Input
-            </label>
-            <div class="flex gap-2">
-                <input type="text" id="manual-barcode-input" autofocus
-                       placeholder="Scan or enter barcode (SET-... or PC-...) and press Enter"
-                       class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 uppercase">
-                <button type="button" id="manual-submit-btn"
-                        class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl shadow transition">
-                    Submit Scan
-                </button>
-            </div>
-            <p class="text-[11px] text-slate-400 mt-1.5">Compatible with Zebra, Honeywell, Netum handheld Bluetooth laser barcode scanners.</p>
-        </div>
-
-        <!-- Real-Time Session Scan Log -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Active Session Scan History</h3>
-                <span class="text-[11px] text-slate-400">Audio chime &amp; haptic confirmation</span>
-            </div>
-            <div class="overflow-x-auto max-h-72">
-                <table class="min-w-full divide-y divide-slate-100 text-left">
-                    <thead class="bg-slate-50 text-[10px] text-slate-500 uppercase font-semibold">
-                        <tr>
-                            <th class="px-3 py-2">Barcode</th>
-                            <th class="px-3 py-2">Status</th>
-                            <th class="px-3 py-2">Style</th>
-                            <th class="px-3 py-2">Color</th>
-                            <th class="px-3 py-2">Size</th>
-                            <th class="px-3 py-2 text-right">Pcs</th>
-                            <th class="px-3 py-2 text-right">Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="scan-log-body" class="divide-y divide-slate-100">
-                        <!-- Populated dynamically by scanner-app.js -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Embedded scripts for offline & mobile operation -->
-        <script th:src="@{/js/html5-qrcode.min.js}"></script>
-        <script th:src="@{/js/sound-fx.js}"></script>
-        <script th:src="@{/js/scanner-app.js}"></script>
-
-    </div>
-</div>
+    <footer th:replace="~{layout/main :: footer}"></footer>
 </body>
 </html>

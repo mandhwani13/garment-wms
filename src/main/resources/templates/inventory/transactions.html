@@ -1,78 +1,81 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-</head>
-<body>
-<div th:replace="~{layout/main :: html}" th:with="content=~{::#transactions-content}, pageTitle='Inventory Audit Log'">
-    <div id="transactions-content" class="space-y-6">
+<head th:replace="~{layout/main :: header_head('Inventory Audit Log')}"></head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+    <header th:replace="~{layout/main :: navbar}"></header>
+    <div th:replace="~{layout/main :: alerts}"></div>
 
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-xl font-black text-slate-900">Inventory Transaction Audit Log</h1>
-                <p class="text-xs text-slate-500">Immutable ledger of all warehouse barcode movements, inward receipts, and outward dispatches.</p>
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div id="transactions-content" class="space-y-6">
+
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-black text-slate-900">Inventory Transaction Audit Log</h1>
+                    <p class="text-xs text-slate-500">Immutable ledger of all warehouse barcode movements, inward receipts, and outward dispatches.</p>
+                </div>
+                <a th:href="@{/scanner}" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs">
+                    <i class="fa-solid fa-qrcode mr-1"></i> Open Scanner
+                </a>
             </div>
-            <a th:href="@{/scanner}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow">
-                <i class="fa-solid fa-qrcode mr-1"></i> Open Scanner
-            </a>
-        </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
-                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
-                        <tr>
-                            <th class="px-4 py-3">Movement</th>
-                            <th class="px-4 py-3">Type</th>
-                            <th class="px-4 py-3">Barcode</th>
-                            <th class="px-4 py-3">Style / Design</th>
-                            <th class="px-4 py-3">Color / Size</th>
-                            <th class="px-4 py-3 text-right">Pieces</th>
-                            <th class="px-4 py-3">Party (Source / Dest)</th>
-                            <th class="px-4 py-3">Reference / Remarks</th>
-                            <th class="px-4 py-3">Operator</th>
-                            <th class="px-4 py-3 text-right">Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
-                        <tr th:each="tx : ${transactions}" class="hover:bg-slate-50 transition">
-                            <td class="px-4 py-3">
-                                <span th:if="${tx.transactionType.name() == 'INWARD'}"
-                                      class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                                    <i class="fa-solid fa-arrow-down mr-1 text-[9px]"></i> INWARD
-                                </span>
-                                <span th:if="${tx.transactionType.name() == 'OUTWARD'}"
-                                      class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
-                                    <i class="fa-solid fa-arrow-up mr-1 text-[9px]"></i> OUTWARD
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 font-mono text-[11px]" th:text="${tx.barcodeType}">SET</td>
-                            <td class="px-4 py-3 font-mono font-bold text-slate-900" th:text="${tx.barcodeValue}">SET-001</td>
-                            <td class="px-4 py-3 font-bold text-slate-800" th:text="${tx.styleCode}">STY-101</td>
-                            <td class="px-4 py-3">
-                                <span th:text="${tx.colorName}">Color</span> / 
-                                <span class="font-bold" th:text="${tx.sizeName}">Size</span>
-                            </td>
-                            <td class="px-4 py-3 text-right font-extrabold text-slate-900" th:text="${tx.piecesCount}">1</td>
-                            <td class="px-4 py-3 text-slate-800 font-semibold" th:text="${tx.partyName}">Party</td>
-                            <td class="px-4 py-3 text-slate-500 text-[11px]">
-                                <span th:if="${tx.referenceNo != null and !tx.referenceNo.isEmpty()}" class="font-mono text-slate-700 font-bold" th:text="${tx.referenceNo} + ' '">REF </span>
-                                <span th:text="${tx.remarks}">Remarks</span>
-                            </td>
-                            <td class="px-4 py-3 font-mono text-slate-600 text-[11px]" th:text="${tx.performedBy}">operator</td>
-                            <td class="px-4 py-3 text-right font-mono text-slate-400 text-[11px]" th:text="${#temporals.format(tx.createdAt, 'yyyy-MM-dd HH:mm:ss')}">Time</td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(transactions)}">
-                            <td colspan="10" class="px-6 py-8 text-center text-slate-400">
-                                No transactions logged yet.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-100 text-left text-xs">
+                        <thead class="bg-slate-50/70 text-slate-500 uppercase font-semibold">
+                            <tr>
+                                <th class="px-4 py-3">Movement</th>
+                                <th class="px-4 py-3">Type</th>
+                                <th class="px-4 py-3">Barcode</th>
+                                <th class="px-4 py-3">Style / Design</th>
+                                <th class="px-4 py-3">Color / Size</th>
+                                <th class="px-4 py-3 text-right">Pieces</th>
+                                <th class="px-4 py-3">Party (Source / Dest)</th>
+                                <th class="px-4 py-3">Reference / Remarks</th>
+                                <th class="px-4 py-3">Operator</th>
+                                <th class="px-4 py-3 text-right">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                            <tr th:each="tx : ${transactions}" class="hover:bg-slate-50/70 transition">
+                                <td class="px-4 py-3">
+                                    <span th:if="${tx.transactionType.name() == 'INWARD'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <i class="fa-solid fa-arrow-down mr-1 text-[9px]"></i> INWARD
+                                    </span>
+                                    <span th:if="${tx.transactionType.name() == 'OUTWARD'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        <i class="fa-solid fa-arrow-up mr-1 text-[9px]"></i> OUTWARD
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 font-mono text-[11px]" th:text="${tx.barcodeType}">SET</td>
+                                <td class="px-4 py-3 font-mono font-bold text-slate-900" th:text="${tx.barcodeValue}">SET-001</td>
+                                <td class="px-4 py-3 font-bold text-slate-800" th:text="${tx.styleCode}">STY-101</td>
+                                <td class="px-4 py-3">
+                                    <span th:text="${tx.colorName}">Color</span> / 
+                                    <span class="font-bold" th:text="${tx.sizeName}">Size</span>
+                                </td>
+                                <td class="px-4 py-3 text-right font-extrabold text-slate-900" th:text="${tx.piecesCount}">1</td>
+                                <td class="px-4 py-3 text-slate-800 font-semibold" th:text="${tx.partyName}">Party</td>
+                                <td class="px-4 py-3 text-slate-500 text-[11px]">
+                                    <span th:if="${tx.referenceNo != null and !tx.referenceNo.isEmpty()}" class="font-mono text-slate-700 font-bold" th:text="${tx.referenceNo} + ' '">REF </span>
+                                    <span th:text="${tx.remarks}">Remarks</span>
+                                </td>
+                                <td class="px-4 py-3 font-mono text-slate-600 text-[11px]" th:text="${tx.performedBy}">operator</td>
+                                <td class="px-4 py-3 text-right font-mono text-slate-400 text-[11px]" th:text="${#temporals.format(tx.createdAt, 'yyyy-MM-dd HH:mm:ss')}">Time</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(transactions)}">
+                                <td colspan="10" class="px-6 py-8 text-center text-slate-400">
+                                    No transactions logged yet.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-    </div>
-</div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout/main :: footer}"></footer>
 </body>
 </html>

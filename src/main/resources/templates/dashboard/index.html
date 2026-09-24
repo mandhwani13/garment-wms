@@ -1,163 +1,166 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-</head>
-<body>
-<div th:replace="~{layout/main :: html}" th:with="content=~{::#dashboard-content}, pageTitle='Warehouse Dashboard'">
-    <div id="dashboard-content" class="space-y-6">
+<head th:replace="~{layout/main :: header_head('Warehouse Dashboard')}"></head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+    <header th:replace="~{layout/main :: navbar}"></header>
+    <div th:replace="~{layout/main :: alerts}"></div>
 
-        <!-- Welcome Banner & Quick Actions -->
-        <div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-black tracking-tight">Garment Warehouse Operations</h1>
-                <p class="text-sm text-indigo-200 mt-1">Real-time bundle tracking, ratio size sets, and thermal barcode logistics.</p>
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div id="dashboard-content" class="space-y-6">
+
+            <!-- Welcome Banner & Quick Actions -->
+            <div class="bg-gradient-to-r from-sky-900 via-slate-800 to-sky-950 rounded-2xl p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-700/50">
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight">Garment Warehouse Operations</h1>
+                    <p class="text-sm text-sky-200 mt-1">Real-time bundle tracking, ratio size sets, and thermal barcode logistics.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a th:href="@{/scanner(mode='INWARD')}" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                        <i class="fa-solid fa-arrow-down-to-bracket mr-2"></i> Inward Scanner
+                    </a>
+                    <a th:href="@{/scanner(mode='OUTWARD')}" class="inline-flex items-center px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                        <i class="fa-solid fa-arrow-up-from-bracket mr-2"></i> Outward Scanner
+                    </a>
+                    <a th:href="@{/lots/create}" class="inline-flex items-center px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                        <i class="fa-solid fa-plus mr-2"></i> New Lot
+                    </a>
+                </div>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <a th:href="@{/scanner(mode='INWARD')}" class="inline-flex items-center px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-xl shadow-md transition">
-                    <i class="fa-solid fa-arrow-down-to-bracket mr-2"></i> Inward Scanner
-                </a>
-                <a th:href="@{/scanner(mode='OUTWARD')}" class="inline-flex items-center px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-white text-sm font-bold rounded-xl shadow-md transition">
-                    <i class="fa-solid fa-arrow-up-from-bracket mr-2"></i> Outward Scanner
-                </a>
-                <a th:href="@{/lots/create}" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl shadow-md transition">
-                    <i class="fa-solid fa-plus mr-2"></i> New Lot
-                </a>
+
+            <!-- Metric KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Total In-Warehouse Stock -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">In Warehouse Stock</p>
+                            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" th:text="${summary.totalInWarehousePieces}">0</h3>
+                        </div>
+                        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                            <i class="fa-solid fa-warehouse text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between text-xs text-slate-600">
+                        <span>Complete Sets: <b class="text-indigo-600 font-bold" th:text="${summary.completeSetPieces}">0</b></span>
+                        <span>Broken Loose: <b class="text-amber-600 font-bold" th:text="${summary.brokenLoosePieces}">0</b></span>
+                    </div>
+                </div>
+
+                <!-- Complete Set Breakdown Ratio -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Complete Ratio Packs</p>
+                            <h3 class="text-3xl font-extrabold text-emerald-600 mt-1" th:text="${summary.completeSetPieces}">0</h3>
+                        </div>
+                        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                            <i class="fa-solid fa-box-archive text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                        <i class="fa-solid fa-check-double text-emerald-500 mr-1"></i> Intact bundle ratio sets
+                    </div>
+                </div>
+
+                <!-- Dispatched Outwarded -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Dispatched</p>
+                            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" th:text="${summary.totalDispatchedPieces}">0</h3>
+                        </div>
+                        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                            <i class="fa-solid fa-truck-fast text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                        <i class="fa-solid fa-arrow-trend-up text-blue-500 mr-1"></i> Outward customer shipments
+                    </div>
+                </div>
+
+                <!-- Total Lots Tracked -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Cutting Lots</p>
+                            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" th:text="${summary.totalLots}">0</h3>
+                        </div>
+                        <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                            <i class="fa-solid fa-layer-group text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
+                        <span>Planned Pieces:</span>
+                        <b class="text-purple-600 font-bold" th:text="${summary.totalPlannedPieces}">0</b>
+                    </div>
+                </div>
             </div>
+
+            <!-- Recent Scanner Audit Log -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+                        <h2 class="text-base font-bold text-slate-800">Recent Inventory Scan Movements</h2>
+                    </div>
+                    <a th:href="@{/transactions}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                        View Full Audit Log &rarr;
+                    </a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                            <tr>
+                                <th class="px-4 py-3">Movement</th>
+                                <th class="px-4 py-3">Type</th>
+                                <th class="px-4 py-3">Barcode</th>
+                                <th class="px-4 py-3">Style / Color</th>
+                                <th class="px-4 py-3">Size / Detail</th>
+                                <th class="px-4 py-3 text-right">Pcs</th>
+                                <th class="px-4 py-3">Party Name</th>
+                                <th class="px-4 py-3">Operator</th>
+                                <th class="px-4 py-3 text-right">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                            <tr th:each="tx : ${recentTransactions}" class="hover:bg-slate-50 transition">
+                                <td class="px-4 py-3">
+                                    <span th:if="${tx.transactionType.name() == 'INWARD'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                                        <i class="fa-solid fa-arrow-down mr-1 text-[9px]"></i> INWARD
+                                    </span>
+                                    <span th:if="${tx.transactionType.name() == 'OUTWARD'}"
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
+                                        <i class="fa-solid fa-arrow-up mr-1 text-[9px]"></i> OUTWARD
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 font-mono text-[11px]" th:text="${tx.barcodeType}">SET</td>
+                                <td class="px-4 py-3 font-mono font-bold text-slate-900" th:text="${tx.barcodeValue}">SET-LOT-001</td>
+                                <td class="px-4 py-3">
+                                    <span class="font-bold text-slate-800" th:text="${tx.styleCode}">STY</span> - 
+                                    <span th:text="${tx.colorName}">Color</span>
+                                </td>
+                                <td class="px-4 py-3" th:text="${tx.sizeName}">Size</td>
+                                <td class="px-4 py-3 text-right font-bold text-slate-900" th:text="${tx.piecesCount}">1</td>
+                                <td class="px-4 py-3" th:text="${tx.partyName}">Party</td>
+                                <td class="px-4 py-3 text-slate-500 font-mono text-[11px]" th:text="${tx.performedBy}">user</td>
+                                <td class="px-4 py-3 text-right text-slate-400 text-[11px]" th:text="${#temporals.format(tx.createdAt, 'yyyy-MM-dd HH:mm:ss')}">Time</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentTransactions)}">
+                                <td colspan="9" class="px-4 py-8 text-center text-slate-400">
+                                    <i class="fa-solid fa-barcode text-2xl mb-2 text-slate-300 block"></i>
+                                    No scan transactions logged yet. Use the <a th:href="@{/scanner}" class="text-indigo-600 font-bold underline">Mobile Scanner</a> to begin inwarding!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
+    </main>
 
-        <!-- Metric KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Total In-Warehouse Stock -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">In Warehouse Stock</p>
-                        <h3 class="text-3xl font-extrabold text-slate-900 mt-1" th:text="${summary.totalInWarehousePieces}">0</h3>
-                    </div>
-                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-                        <i class="fa-solid fa-warehouse text-xl"></i>
-                    </div>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between text-xs text-slate-600">
-                    <span>Complete Sets: <b class="text-indigo-600 font-bold" th:text="${summary.completeSetPieces}">0</b></span>
-                    <span>Broken Loose: <b class="text-amber-600 font-bold" th:text="${summary.brokenLoosePieces}">0</b></span>
-                </div>
-            </div>
-
-            <!-- Complete Set Breakdown Ratio -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Complete Ratio Packs</p>
-                        <h3 class="text-3xl font-extrabold text-emerald-600 mt-1" th:text="${summary.completeSetPieces}">0</h3>
-                    </div>
-                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                        <i class="fa-solid fa-box-archive text-xl"></i>
-                    </div>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
-                    <i class="fa-solid fa-check-double text-emerald-500 mr-1"></i> Intact bundle ratio sets
-                </div>
-            </div>
-
-            <!-- Dispatched Outwarded -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Dispatched</p>
-                        <h3 class="text-3xl font-extrabold text-slate-900 mt-1" th:text="${summary.totalDispatchedPieces}">0</h3>
-                    </div>
-                    <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                        <i class="fa-solid fa-truck-fast text-xl"></i>
-                    </div>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
-                    <i class="fa-solid fa-arrow-trend-up text-blue-500 mr-1"></i> Outward customer shipments
-                </div>
-            </div>
-
-            <!-- Total Lots Tracked -->
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Cutting Lots</p>
-                        <h3 class="text-3xl font-extrabold text-slate-900 mt-1" th:text="${summary.totalLots}">0</h3>
-                    </div>
-                    <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                        <i class="fa-solid fa-layer-group text-xl"></i>
-                    </div>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
-                    <span>Planned Pieces:</span>
-                    <b class="text-purple-600 font-bold" th:text="${summary.totalPlannedPieces}">0</b>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Scanner Audit Log -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
-                    <h2 class="text-base font-bold text-slate-800">Recent Inventory Scan Movements</h2>
-                </div>
-                <a th:href="@{/transactions}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-                    View Full Audit Log &rarr;
-                </a>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
-                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
-                        <tr>
-                            <th class="px-4 py-3">Movement</th>
-                            <th class="px-4 py-3">Type</th>
-                            <th class="px-4 py-3">Barcode</th>
-                            <th class="px-4 py-3">Style / Color</th>
-                            <th class="px-4 py-3">Size / Detail</th>
-                            <th class="px-4 py-3 text-right">Pcs</th>
-                            <th class="px-4 py-3">Party Name</th>
-                            <th class="px-4 py-3">Operator</th>
-                            <th class="px-4 py-3 text-right">Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
-                        <tr th:each="tx : ${recentTransactions}" class="hover:bg-slate-50 transition">
-                            <td class="px-4 py-3">
-                                <span th:if="${tx.transactionType.name() == 'INWARD'}"
-                                      class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                                    <i class="fa-solid fa-arrow-down mr-1 text-[9px]"></i> INWARD
-                                </span>
-                                <span th:if="${tx.transactionType.name() == 'OUTWARD'}"
-                                      class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
-                                    <i class="fa-solid fa-arrow-up mr-1 text-[9px]"></i> OUTWARD
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 font-mono text-[11px]" th:text="${tx.barcodeType}">SET</td>
-                            <td class="px-4 py-3 font-mono font-bold text-slate-900" th:text="${tx.barcodeValue}">SET-LOT-001</td>
-                            <td class="px-4 py-3">
-                                <span class="font-bold text-slate-800" th:text="${tx.styleCode}">STY</span> - 
-                                <span th:text="${tx.colorName}">Color</span>
-                            </td>
-                            <td class="px-4 py-3" th:text="${tx.sizeName}">Size</td>
-                            <td class="px-4 py-3 text-right font-bold text-slate-900" th:text="${tx.piecesCount}">1</td>
-                            <td class="px-4 py-3" th:text="${tx.partyName}">Party</td>
-                            <td class="px-4 py-3 text-slate-500 font-mono text-[11px]" th:text="${tx.performedBy}">user</td>
-                            <td class="px-4 py-3 text-right text-slate-400 text-[11px]" th:text="${#temporals.format(tx.createdAt, 'yyyy-MM-dd HH:mm:ss')}">Time</td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(recentTransactions)}">
-                            <td colspan="9" class="px-4 py-8 text-center text-slate-400">
-                                <i class="fa-solid fa-barcode text-2xl mb-2 text-slate-300 block"></i>
-                                No scan transactions logged yet. Use the <a th:href="@{/scanner}" class="text-indigo-600 font-bold underline">Mobile Scanner</a> to begin inwarding!
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
-</div>
+    <footer th:replace="~{layout/main :: footer}"></footer>
 </body>
 </html>

@@ -1,105 +1,108 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-</head>
-<body>
-<div th:replace="~{layout/main :: html}" th:with="content=~{::#admin-users-content}, pageTitle='User Management (RBAC)'">
-    <div id="admin-users-content" class="space-y-6">
+<head th:replace="~{layout/main :: header_head('User Management (RBAC)')}"></head>
+<body class="bg-slate-50/80 text-slate-700 antialiased min-h-screen flex flex-col font-sans">
+    <header th:replace="~{layout/main :: navbar}"></header>
+    <div th:replace="~{layout/main :: alerts}"></div>
 
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-                <h1 class="text-xl font-black text-slate-900">User Provisioning &amp; Role Access Control</h1>
-                <p class="text-xs text-slate-500">Manage user accounts, passwords, and permissions (MASTER, ADMIN, WAREHOUSE_USER).</p>
-            </div>
-            <button onclick="document.getElementById('modal-add-user').classList.remove('hidden')"
-                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition">
-                <i class="fa-solid fa-user-plus mr-1.5"></i> Add New User
-            </button>
-        </div>
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div id="admin-users-content" class="space-y-6">
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
-                <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
-                    <tr>
-                        <th class="px-6 py-3.5">Username</th>
-                        <th class="px-6 py-3.5">Full Name</th>
-                        <th class="px-6 py-3.5">Assigned Role</th>
-                        <th class="px-6 py-3.5">Status</th>
-                        <th class="px-6 py-3.5">Created Date</th>
-                        <th class="px-6 py-3.5 text-center">Toggle Access</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
-                    <tr th:each="u : ${users}" class="hover:bg-slate-50 transition">
-                        <td class="px-6 py-3.5 font-mono font-bold text-indigo-700" th:text="${u.username}">admin</td>
-                        <td class="px-6 py-3.5 font-bold text-slate-900" th:text="${u.fullName}">Name</td>
-                        <td class="px-6 py-3.5">
-                            <span th:if="${u.role.name() == 'ROLE_MASTER'}" class="px-2.5 py-1 bg-purple-100 text-purple-800 font-bold rounded-lg text-[11px]">MASTER</span>
-                            <span th:if="${u.role.name() == 'ROLE_ADMIN'}" class="px-2.5 py-1 bg-indigo-100 text-indigo-800 font-bold rounded-lg text-[11px]">ADMIN</span>
-                            <span th:if="${u.role.name() == 'ROLE_WAREHOUSE_USER'}" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold rounded-lg text-[11px]">WAREHOUSE OPERATOR</span>
-                        </td>
-                        <td class="px-6 py-3.5">
-                            <span th:if="${u.enabled}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">ACTIVE</span>
-                            <span th:unless="${u.enabled}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">DISABLED</span>
-                        </td>
-                        <td class="px-6 py-3.5 text-slate-400 font-mono text-[11px]" th:text="${#temporals.format(u.createdAt, 'yyyy-MM-dd')}">Date</td>
-                        <td class="px-6 py-3.5 text-center">
-                            <form th:action="@{/admin/users/{id}/toggle(id=${u.id})}" method="post" class="inline">
-                                <button type="submit"
-                                        th:class="${u.enabled ? 'px-3 py-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200' : 'px-3 py-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'} + ' rounded-lg text-xs font-bold transition'">
-                                    <span th:text="${u.enabled ? 'Disable' : 'Enable'}">Toggle</span>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Modal: Add New User -->
-        <div id="modal-add-user" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-                <div class="flex items-center justify-between border-b pb-3">
-                    <h3 class="text-base font-bold text-slate-900">Provision User Account</h3>
-                    <button onclick="document.getElementById('modal-add-user').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-slate-800 tracking-tight">User Provisioning &amp; Role Access Control</h1>
+                    <p class="text-xs text-slate-500">Manage user accounts, passwords, and permissions (MASTER, ADMIN, WAREHOUSE_USER).</p>
                 </div>
-
-                <form th:action="@{/admin/users/create}" method="post" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Username *</label>
-                        <input type="text" name="username" required placeholder="e.g. jdoe_warehouse"
-                               class="w-full px-3 py-2 border rounded-xl text-xs font-mono lowercase focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
-                        <input type="text" name="fullName" required placeholder="e.g. John Doe"
-                               class="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
-                        <input type="password" name="password" required placeholder="Set user password"
-                               class="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Role Permission *</label>
-                        <select name="role" required class="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
-                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r.displayName + ' (' + r.name() + ')'}"></option>
-                        </select>
-                    </div>
-                    <div class="flex justify-end gap-2 pt-2 border-t">
-                        <button type="button" onclick="document.getElementById('modal-add-user').classList.add('hidden')"
-                                class="px-4 py-2 border text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50">Cancel</button>
-                        <button type="submit"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl">Save User</button>
-                    </div>
-                </form>
+                <button onclick="document.getElementById('modal-add-user').classList.remove('hidden')"
+                        class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                    <i class="fa-solid fa-user-plus mr-1.5"></i> Add New User
+                </button>
             </div>
-        </div>
 
-    </div>
-</div>
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <table class="min-w-full divide-y divide-slate-200/70 text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-3.5">Username</th>
+                            <th class="px-6 py-3.5">Full Name</th>
+                            <th class="px-6 py-3.5">Assigned Role</th>
+                            <th class="px-6 py-3.5">Status</th>
+                            <th class="px-6 py-3.5">Created Date</th>
+                            <th class="px-6 py-3.5 text-center">Toggle Access</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                        <tr th:each="u : ${users}" class="hover:bg-slate-50/70 transition">
+                            <td class="px-6 py-3.5 font-mono font-bold text-sky-700" th:text="${u.username}">admin</td>
+                            <td class="px-6 py-3.5 font-bold text-slate-800" th:text="${u.fullName}">Name</td>
+                            <td class="px-6 py-3.5">
+                                <span th:if="${u.role.name() == 'ROLE_MASTER'}" class="px-2.5 py-1 bg-purple-50 text-purple-700 border border-purple-200/60 font-bold rounded-lg text-[11px]">MASTER</span>
+                                <span th:if="${u.role.name() == 'ROLE_ADMIN'}" class="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200/60 font-bold rounded-lg text-[11px]">ADMIN</span>
+                                <span th:if="${u.role.name() == 'ROLE_WAREHOUSE_USER'}" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-bold rounded-lg text-[11px]">WAREHOUSE OPERATOR</span>
+                            </td>
+                            <td class="px-6 py-3.5">
+                                <span th:if="${u.enabled}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">ACTIVE</span>
+                                <span th:unless="${u.enabled}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">DISABLED</span>
+                            </td>
+                            <td class="px-6 py-3.5 text-slate-400 font-mono text-[11px]" th:text="${#temporals.format(u.createdAt, 'yyyy-MM-dd')}">Date</td>
+                            <td class="px-6 py-3.5 text-center">
+                                <form th:action="@{/admin/users/{id}/toggle(id=${u.id})}" method="post" class="inline">
+                                    <button type="submit"
+                                            th:class="${u.enabled ? 'px-3 py-1 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200' : 'px-3 py-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'} + ' rounded-lg text-xs font-bold transition'">
+                                        <span th:text="${u.enabled ? 'Disable' : 'Enable'}">Toggle</span>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal: Add New User -->
+            <div id="modal-add-user" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-slate-800">Provision User Account</h3>
+                        <button onclick="document.getElementById('modal-add-user').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <form th:action="@{/admin/users/create}" method="post" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Username *</label>
+                            <input type="text" name="username" required placeholder="e.g. jdoe_warehouse"
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono lowercase focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
+                            <input type="text" name="fullName" required placeholder="e.g. John Doe"
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
+                            <input type="password" name="password" required placeholder="Set user password"
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Role Permission *</label>
+                            <select name="role" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r.displayName + ' (' + r.name() + ')'}"></option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                            <button type="button" onclick="document.getElementById('modal-add-user').classList.add('hidden')"
+                                    class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-xs transition">Save User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer th:replace="~{layout/main :: footer}"></footer>
 </body>
 </html>

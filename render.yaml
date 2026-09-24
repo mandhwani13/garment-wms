@@ -7,7 +7,7 @@ services:
     name: garment-wms-web
     env: docker
     dockerfilePath: ./Dockerfile
-    plan: starter
+    plan: free
     region: oregon
     healthCheckPath: /actuator/health
     envVars:
@@ -22,10 +22,10 @@ services:
       - key: APP_JWT_SECRET
         generateValue: true
 
-# Managed PostgreSQL Database
+# Managed PostgreSQL Database (Free Tier)
 databases:
   - name: garment-wms-db
     databaseName: garment_wms
     user: garment_admin
-    plan: starter
+    plan: free
     region: oregon

@@ -52,6 +52,14 @@ public class SinglePiece {
     @JoinColumn(name = "current_customer_id")
     private Customer currentCustomer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_location_id")
+    private Location currentLocation;
+
     @Column(name = "created_at")
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

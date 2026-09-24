@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header_head('Brand Division & Finishing BOM')}"></head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+    <header th:replace="~{layout/main :: navbar}"></header>
+    <div th:replace="~{layout/main :: alerts}"></div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="space-y-6">
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-slate-800 tracking-tight">Phase 6: Brand Division &amp; Finishing Program (BOM Calculation)</h1>
+                    <p class="text-xs text-slate-500">Allocate washed lots to Brands; system automatically calculates and issues brand-specific trims from Central Store.</p>
+                </div>
+                <button onclick="document.getElementById('modal-create-program').classList.remove('hidden')"
+                        class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                    <i class="fa-solid fa-tags mr-1.5"></i> Create Brand Finishing Program
+                </button>
+            </div>
+
+            <!-- Programs Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <table class="min-w-full divide-y divide-slate-200/70 text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-3.5">Program No</th>
+                            <th class="px-6 py-3.5">Cutting Lot</th>
+                            <th class="px-6 py-3.5">Assigned Brand</th>
+                            <th class="px-6 py-3.5">Finishing Plant</th>
+                            <th class="px-6 py-3.5 text-right">Allocated Pcs</th>
+                            <th class="px-6 py-3.5">BOM Trims Summary</th>
+                            <th class="px-6 py-3.5 text-center">Status</th>
+                            <th class="px-6 py-3.5 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                        <tr th:each="p : ${programs}" class="hover:bg-slate-50/70 transition">
+                            <td class="px-6 py-3.5 font-mono font-bold text-sky-700" th:text="${p.programNo}">FIN-01</td>
+                            <td class="px-6 py-3.5 font-mono font-bold text-slate-900" th:text="${p.cuttingLot.lotNumber}">LOT-01</td>
+                            <td class="px-6 py-3.5">
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200/60" th:text="${p.brand.brandName}">DenimCo</span>
+                            </td>
+                            <td class="px-6 py-3.5 font-bold text-teal-700" th:text="${p.finishingUnit.partyName}">Apex Finishing</td>
+                            <td class="px-6 py-3.5 text-right font-mono font-black text-slate-900 text-sm" th:text="${p.piecesAllocated + ' pcs'}">400</td>
+                            <td class="px-6 py-3.5">
+                                <div class="text-[11px] space-y-0.5">
+                                    <div th:each="t : ${p.trimIssuances}" class="text-slate-600">
+                                        <span class="font-bold text-slate-800" th:text="${t.trim.itemName + ': '}">Trim: </span>
+                                        <span class="font-mono" th:text="${#numbers.formatDecimal(t.requiredQty, 0, 0) + ' ' + t.trim.uom}">400 pcs</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3.5 text-center">
+                                <span th:if="${p.status == 'PENDING_TRIMS'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">AWAITING TRIMS</span>
+                                <span th:if="${p.status == 'TRIMS_ISSUED'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">TRIMS DISPATCHED</span>
+                                <span th:if="${p.status == 'PACKED_COMPLETED'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">PACKED &amp; READY</span>
+                            </td>
+                            <td class="px-6 py-3.5 text-center">
+                                <div class="flex flex-col gap-1 items-center">
+                                    <form th:if="${p.status == 'PENDING_TRIMS'}" th:action="@{/finishing/programs/{id}/issue-trims(id=${p.id})}" method="post">
+                                        <button type="submit" class="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                                            <i class="fa-solid fa-truck-ramp-box mr-1"></i> Issue BOM Trims
+                                        </button>
+                                    </form>
+                                    <form th:if="${p.status == 'TRIMS_ISSUED'}" th:action="@{/finishing/programs/{id}/complete(id=${p.id})}" method="post">
+                                        <button type="submit" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                                            <i class="fa-solid fa-box-check mr-1"></i> Pack Complete
+                                        </button>
+                                    </form>
+                                    <span th:if="${p.status == 'PACKED_COMPLETED'}" class="text-[11px] text-emerald-700 font-bold">Ready for Inward</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(programs)}">
+                            <td colspan="8" class="px-6 py-8 text-center text-slate-400">No brand finishing programs created yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal Create Program -->
+            <div id="modal-create-program" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-slate-800">Create Brand Finishing Program</h3>
+                        <button onclick="document.getElementById('modal-create-program').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <form th:action="@{/finishing/programs/create}" method="post" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Cutting Lot *</label>
+                            <select name="cuttingLotId" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option th:each="l : ${lots}" th:value="${l.id}" th:text="${l.lotNumber + ' (' + l.totalPieces + ' pcs)'}"></option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Apparel Brand *</label>
+                            <select name="brandId" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.brandName + ' (' + b.brandCode + ')'}"></option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Finishing &amp; Packing Plant *</label>
+                            <select name="finishingUnitId" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option th:each="f : ${finishingUnits}" th:value="${f.id}" th:text="${f.partyName + ' (' + f.city + ')'}"></option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Brand Pieces Allocation *</label>
+                            <input type="number" name="piecesAllocated" value="400" min="1" required
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button type="button" onclick="document.getElementById('modal-create-program').classList.add('hidden')"
+                                    class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-xs transition">Calculate BOM &amp; Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer th:replace="~{layout/main :: footer}"></footer>
+</body>
+</html>

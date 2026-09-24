@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header_head('Subcontracting Job Work Challans')}"></head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+    <header th:replace="~{layout/main :: navbar}"></header>
+    <div th:replace="~{layout/main :: alerts}"></div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="space-y-6">
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-slate-800 tracking-tight">Phase 4: Component Routing &amp; Job Work Challans</h1>
+                    <p class="text-xs text-slate-500">Route cut components to external job-workers for embroidery, waistband embossing, or laser distressing before assembly.</p>
+                </div>
+                <button onclick="document.getElementById('modal-issue-challan').classList.remove('hidden')"
+                        class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                    <i class="fa-solid fa-scissors mr-1.5"></i> Issue Job Work Challan
+                </button>
+            </div>
+
+            <!-- Challans Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <table class="min-w-full divide-y divide-slate-200/70 text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-3.5">Challan No</th>
+                            <th class="px-6 py-3.5">Cutting Lot</th>
+                            <th class="px-6 py-3.5">Subcontractor Job Worker</th>
+                            <th class="px-6 py-3.5">Component Work Type</th>
+                            <th class="px-6 py-3.5 text-right">Sent Pcs</th>
+                            <th class="px-6 py-3.5 text-right">Received Pcs</th>
+                            <th class="px-6 py-3.5 text-center">Damages</th>
+                            <th class="px-6 py-3.5 text-center">Status</th>
+                            <th class="px-6 py-3.5 text-center">Inward Return</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                        <tr th:each="c : ${challans}" class="hover:bg-slate-50/70 transition">
+                            <td class="px-6 py-3.5 font-mono font-bold text-sky-700" th:text="${c.challanNo}">JW-01</td>
+                            <td class="px-6 py-3.5 font-mono font-bold text-slate-900" th:text="${c.cuttingLot.lotNumber}">LOT-01</td>
+                            <td class="px-6 py-3.5 font-bold text-slate-800" th:text="${c.jobWorker.partyName}">Worker Name</td>
+                            <td class="px-6 py-3.5">
+                                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60" th:text="${c.componentType}">EMBROIDERY</span>
+                            </td>
+                            <td class="px-6 py-3.5 text-right font-mono font-bold text-slate-900" th:text="${c.piecesSent}">800</td>
+                            <td class="px-6 py-3.5 text-right font-mono text-emerald-700 font-bold" th:text="${c.piecesReceived}">0</td>
+                            <td class="px-6 py-3.5 text-center font-mono text-rose-600 font-bold" th:text="${c.damagedPieces}">0</td>
+                            <td class="px-6 py-3.5 text-center">
+                                <span th:if="${c.status == 'ISSUED'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">AT SUBCONTRACTOR</span>
+                                <span th:if="${c.status == 'RECEIVED_COMPLETED'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">RECEIVED</span>
+                                <span th:if="${c.status == 'DISCREPANCY'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">DISCREPANCY</span>
+                            </td>
+                            <td class="px-6 py-3.5 text-center">
+                                <form th:if="${c.status == 'ISSUED'}" th:action="@{/jobwork/challans/{id}/receive(id=${c.id})}" method="post" class="inline-flex items-center gap-1.5">
+                                    <input type="number" name="piecesReceived" th:value="${c.piecesSent}" max="${c.piecesSent}" class="w-16 px-1.5 py-1 border border-slate-200 rounded-lg text-xs font-mono text-right" title="Good Pieces">
+                                    <input type="number" name="damagedPieces" value="0" min="0" class="w-12 px-1.5 py-1 border border-slate-200 rounded-lg text-xs font-mono text-right" title="Damaged Pieces">
+                                    <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-xs transition">
+                                        Receive
+                                    </button>
+                                </form>
+                                <span th:unless="${c.status == 'ISSUED'}" class="text-[11px] text-slate-400 font-mono">Completed</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(challans)}">
+                            <td colspan="9" class="px-6 py-8 text-center text-slate-400">No job work subcontracting challans issued yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal Issue Challan -->
+            <div id="modal-issue-challan" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-slate-800">Issue Subcontracting Challan</h3>
+                        <button onclick="document.getElementById('modal-issue-challan').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <form th:action="@{/jobwork/challans/issue}" method="post" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Cutting Lot *</label>
+                            <select name="cuttingLotId" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option th:each="l : ${lots}" th:value="${l.id}" th:text="${l.lotNumber + ' (' + l.totalPieces + ' pcs)'}"></option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Job Worker Subcontractor *</label>
+                            <select name="jobWorkerId" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option th:each="j : ${jobWorkers}" th:value="${j.id}" th:text="${j.partyName + ' (' + j.city + ')'}"></option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Component Work Stage *</label>
+                            <select name="componentType" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option value="BACK_POCKET_EMBROIDERY">Back Pocket &rarr; Zari / Chain Stitch Embroidery</option>
+                                <option value="WAISTBAND_EMBOSS">Waistband &rarr; Heat Embossing / Patching</option>
+                                <option value="FRONT_PANEL_LASER_PRINT">Front Panel &rarr; Laser Whiskering &amp; Abrasion</option>
+                                <option value="CHEST_EMBROIDERY">Chest / Pocket &rarr; Brand Monogram Embroidery</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Component Pieces Count *</label>
+                            <input type="number" name="piecesSent" value="800" min="1" required
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Notes / Instructions</label>
+                            <input type="text" name="notes" placeholder="Thread color code, design placement..."
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button type="button" onclick="document.getElementById('modal-issue-challan').classList.add('hidden')"
+                                    class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-xs transition">Dispatch Challan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer th:replace="~{layout/main :: footer}"></footer>
+</body>
+</html>

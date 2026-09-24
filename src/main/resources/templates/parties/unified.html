@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header_head('Partner Directory')}"></head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+    <header th:replace="~{layout/main :: navbar}"></header>
+    <div th:replace="~{layout/main :: alerts}"></div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="space-y-6">
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-slate-800 tracking-tight">Supply Chain Partners (ERP Parties)</h1>
+                    <p class="text-xs text-slate-500">Fabric Mills, Stitching Units, Job Workers, Washing Units, Finishing Plants, and Buyers.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="document.getElementById('modal-add-party').classList.remove('hidden')"
+                            class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                        <i class="fa-solid fa-plus mr-1.5"></i> Add New Partner
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Badges by Type -->
+            <div class="flex flex-wrap gap-2 text-xs">
+                <a th:href="@{/parties/unified}"
+                   class="px-3 py-1.5 rounded-xl font-semibold border transition"
+                   th:classappend="${selectedType == null} ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
+                   All Partners (<span th:text="${parties.size()}">0</span>)
+                </a>
+                <a th:each="pt : ${partyTypes}"
+                   th:href="@{/parties/unified(type=${pt})}"
+                   class="px-3 py-1.5 rounded-xl font-semibold border transition"
+                   th:classappend="${selectedType == pt} ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
+                   th:text="${pt.displayName}">Party Type</a>
+            </div>
+
+            <!-- Parties Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <table class="min-w-full divide-y divide-slate-200/70 text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-3.5">Code</th>
+                            <th class="px-6 py-3.5">Party Name</th>
+                            <th class="px-6 py-3.5">Role Type</th>
+                            <th class="px-6 py-3.5">Location / City</th>
+                            <th class="px-6 py-3.5">Contact Person</th>
+                            <th class="px-6 py-3.5">GSTIN</th>
+                            <th class="px-6 py-3.5 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                        <tr th:each="p : ${parties}" class="hover:bg-slate-50/70 transition">
+                            <td class="px-6 py-3.5 font-mono font-bold text-sky-700" th:text="${p.partyCode}">CODE</td>
+                            <td class="px-6 py-3.5 font-bold text-slate-800" th:text="${p.partyName}">Party Name</td>
+                            <td class="px-6 py-3.5">
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold border"
+                                      th:classappend="${p.partyType.name() == 'FABRIC_MILL'} ? 'bg-indigo-50 text-indigo-700 border-indigo-200/60' :
+                                                      (${p.partyType.name() == 'STITCHING_UNIT'} ? 'bg-teal-50 text-teal-700 border-teal-200/60' :
+                                                      (${p.partyType.name() == 'JOB_WORKER'} ? 'bg-amber-50 text-amber-700 border-amber-200/60' :
+                                                      (${p.partyType.name() == 'WASHING_UNIT'} ? 'bg-blue-50 text-blue-700 border-blue-200/60' :
+                                                      (${p.partyType.name() == 'FINISHING_UNIT'} ? 'bg-rose-50 text-rose-700 border-rose-200/60' : 'bg-slate-50 text-slate-700 border-slate-200/60'))))"
+                                      th:text="${p.partyType.displayName}">TYPE</span>
+                            </td>
+                            <td class="px-6 py-3.5 text-slate-600" th:text="${p.city + ', ' + p.state}">City, State</td>
+                            <td class="px-6 py-3.5">
+                                <div class="font-bold text-slate-800" th:text="${p.contactPerson}">Contact</div>
+                                <div class="text-[11px] text-slate-400 font-mono" th:text="${p.phone}">Phone</div>
+                            </td>
+                            <td class="px-6 py-3.5 font-mono text-[11px] text-slate-500" th:text="${p.gstin != null ? p.gstin : '-'}">GSTIN</td>
+                            <td class="px-6 py-3.5 text-right">
+                                <span th:if="${p.active}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">ACTIVE</span>
+                                <span th:unless="${p.active}" class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">INACTIVE</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(parties)}">
+                            <td colspan="7" class="px-6 py-8 text-center text-slate-400">No partner parties found for this filter.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal Add Party -->
+            <div id="modal-add-party" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-slate-800">Register Supply Chain Partner</h3>
+                        <button onclick="document.getElementById('modal-add-party').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <form th:action="@{/parties/unified/create}" method="post" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Party Code *</label>
+                                <input type="text" name="partyCode" required placeholder="e.g. STITCH-05"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono uppercase focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Party Role Type *</label>
+                                <select name="partyType" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                    <option th:each="pt : ${partyTypes}" th:value="${pt}" th:text="${pt.displayName}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Party / Company Name *</label>
+                            <input type="text" name="partyName" required placeholder="e.g. Surat Denim Wash Works"
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Contact Person</label>
+                                <input type="text" name="contactPerson" placeholder="Full name"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+                                <input type="text" name="phone" placeholder="+91-..."
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">City</label>
+                                <input type="text" name="city" placeholder="City"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">State</label>
+                                <input type="text" name="state" placeholder="State"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">GSTIN</label>
+                                <input type="text" name="gstin" placeholder="GSTIN No"
+                                       class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono uppercase focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Link to Virtual Warehouse Location</label>
+                            <select name="linkedLocationId" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option value="">-- No linked location --</option>
+                                <option th:each="loc : ${locations}" th:value="${loc.id}" th:text="${loc.locationName + ' (' + loc.locationCode + ')'}"></option>
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button type="button" onclick="document.getElementById('modal-add-party').classList.add('hidden')"
+                                    class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-xs transition">Save Partner</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer th:replace="~{layout/main :: footer}"></footer>
+</body>
+</html>

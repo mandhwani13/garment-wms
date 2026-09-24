@@ -35,14 +35,21 @@ public class SecurityConfig {
                 ).permitAll()
                 // Master admin only routes
                 .requestMatchers("/admin/users/**").hasAuthority("ROLE_MASTER")
-                // Admin and Master routes (Master data, Lot creation, Print export)
+                // Enterprise ERP Workflow & Masters
                 .requestMatchers(
                     "/styles/**",
                     "/sizesets/**",
                     "/parties/**",
+                    "/brands/**",
+                    "/fabric/**",
+                    "/trims/**",
+                    "/cutting/**",
+                    "/jobwork/**",
+                    "/washing/**",
+                    "/finishing/**",
                     "/lots/**",
                     "/labels/**"
-                ).hasAnyAuthority("ROLE_ADMIN", "ROLE_MASTER")
+                ).authenticated()
                 // Operations and All Authenticated
                 .requestMatchers(
                     "/dashboard",

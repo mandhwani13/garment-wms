@@ -30,6 +30,14 @@ public class Style {
     @Column(name = "fabric_details", length = 255)
     private String fabricDetails;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "fabric_id")
+    private FabricMaster fabric;
+
     @Column(name = "created_at")
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

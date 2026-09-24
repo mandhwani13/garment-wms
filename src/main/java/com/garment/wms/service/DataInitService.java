@@ -63,6 +63,50 @@ public class DataInitService implements CommandLineRunner {
                     .build());
             log.info("Default OPERATOR user seeded: username=operator");
         }
+
+        if (!userRepository.existsByUsername("production")) {
+            userRepository.save(UserAccount.builder()
+                    .username("production")
+                    .password(passwordEncoder.encode("prod123"))
+                    .fullName("Production Manager")
+                    .role(Role.ROLE_PRODUCTION_MANAGER)
+                    .enabled(true)
+                    .build());
+            log.info("Default PRODUCTION MANAGER user seeded: username=production");
+        }
+
+        if (!userRepository.existsByUsername("stitching")) {
+            userRepository.save(UserAccount.builder()
+                    .username("stitching")
+                    .password(passwordEncoder.encode("stitch123"))
+                    .fullName("Arvind Stitching Plant Operator")
+                    .role(Role.ROLE_STITCHING_UNIT)
+                    .enabled(true)
+                    .build());
+            log.info("Default STITCHING user seeded: username=stitching");
+        }
+
+        if (!userRepository.existsByUsername("washing")) {
+            userRepository.save(UserAccount.builder()
+                    .username("washing")
+                    .password(passwordEncoder.encode("wash123"))
+                    .fullName("AquaLuxe Wash Plant Operator")
+                    .role(Role.ROLE_WASHING_UNIT)
+                    .enabled(true)
+                    .build());
+            log.info("Default WASHING user seeded: username=washing");
+        }
+
+        if (!userRepository.existsByUsername("finishing")) {
+            userRepository.save(UserAccount.builder()
+                    .username("finishing")
+                    .password(passwordEncoder.encode("finish123"))
+                    .fullName("Apex Finishing Plant Operator")
+                    .role(Role.ROLE_FINISHING_UNIT)
+                    .enabled(true)
+                    .build());
+            log.info("Default FINISHING user seeded: username=finishing");
+        }
     }
 
     private void seedSampleCuttingLot() {

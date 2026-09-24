@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: header_head('Washing Program & Color Splitting')}"></head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+    <header th:replace="~{layout/main :: navbar}"></header>
+    <div th:replace="~{layout/main :: alerts}"></div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="space-y-6">
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-black text-slate-800 tracking-tight">Phase 5: Washing Program &amp; Child Color Lot Splitting</h1>
+                    <p class="text-xs text-slate-500">Stitched raw lots are transferred to washing units and divided into multiple color wash recipes with shrinkage testing.</p>
+                </div>
+                <button onclick="document.getElementById('modal-create-batch').classList.remove('hidden')"
+                        class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                    <i class="fa-solid fa-soap mr-1.5"></i> Initiate Color Wash Batch
+                </button>
+            </div>
+
+            <!-- Batches Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <table class="min-w-full divide-y divide-slate-200/70 text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-3.5">Wash Batch No</th>
+                            <th class="px-6 py-3.5">Master Lot</th>
+                            <th class="px-6 py-3.5">Washing Unit</th>
+                            <th class="px-6 py-3.5">Color Recipe</th>
+                            <th class="px-6 py-3.5 text-right">In Pieces</th>
+                            <th class="px-6 py-3.5 text-right">Out Pieces</th>
+                            <th class="px-6 py-3.5 text-center">Actual Shrinkage</th>
+                            <th class="px-6 py-3.5 text-center">Status</th>
+                            <th class="px-6 py-3.5 text-center">Complete Log</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                        <tr th:each="b : ${batches}" class="hover:bg-slate-50/70 transition">
+                            <td class="px-6 py-3.5 font-mono font-bold text-sky-700" th:text="${b.batchNo}">WASH-01</td>
+                            <td class="px-6 py-3.5 font-mono font-bold text-slate-900" th:text="${b.cuttingLot.lotNumber}">LOT-01</td>
+                            <td class="px-6 py-3.5 font-bold text-slate-800" th:text="${b.washingUnit.partyName}">Washing Unit</td>
+                            <td class="px-6 py-3.5">
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60" th:text="${b.colorName}">Dark Enzyme</span>
+                            </td>
+                            <td class="px-6 py-3.5 text-right font-mono font-bold text-slate-900" th:text="${b.piecesIn}">80</td>
+                            <td class="px-6 py-3.5 text-right font-mono text-emerald-700 font-bold" th:text="${b.piecesOut}">0</td>
+                            <td class="px-6 py-3.5 text-center font-mono font-bold text-slate-700" th:text="${b.shrinkageActualPct + '%'}">0.0%</td>
+                            <td class="px-6 py-3.5 text-center">
+                                <span th:if="${b.status == 'SENT_TO_WASH'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">IN WASH CYCLE</span>
+                                <span th:if="${b.status == 'WASHED_COMPLETED'}" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">WASHED &amp; DRIED</span>
+                            </td>
+                            <td class="px-6 py-3.5 text-center">
+                                <form th:if="${b.status == 'SENT_TO_WASH'}" th:action="@{/washing/batches/{id}/complete(id=${b.id})}" method="post" class="inline-flex items-center gap-1.5">
+                                    <input type="number" name="piecesOut" th:value="${b.piecesIn}" class="w-16 px-1.5 py-1 border border-slate-200 rounded-lg text-xs font-mono text-right" title="Good Output">
+                                    <input type="number" step="0.1" name="shrinkagePct" value="3.2" class="w-14 px-1.5 py-1 border border-slate-200 rounded-lg text-xs font-mono text-right" title="Shrinkage %">
+                                    <input type="number" name="rejectionPieces" value="0" min="0" class="w-10 px-1.5 py-1 border border-slate-200 rounded-lg text-xs font-mono text-right" title="Damage">
+                                    <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-xs transition">
+                                        Log Done
+                                    </button>
+                                </form>
+                                <span th:unless="${b.status == 'SENT_TO_WASH'}" class="text-[11px] text-slate-400 font-mono">Completed</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(batches)}">
+                            <td colspan="9" class="px-6 py-8 text-center text-slate-400">No color wash batches created yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal Create Wash Batch -->
+            <div id="modal-create-batch" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-slate-800">Initiate Color Wash Batch</h3>
+                        <button onclick="document.getElementById('modal-create-batch').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <form th:action="@{/washing/batches/create}" method="post" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Cutting Lot *</label>
+                            <select name="cuttingLotId" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option th:each="l : ${lots}" th:value="${l.id}" th:text="${l.lotNumber + ' (' + l.totalPieces + ' pcs)'}"></option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Washing &amp; Dyeing Unit *</label>
+                            <select name="washingUnitId" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                                <option th:each="w : ${washingUnits}" th:value="${w.id}" th:text="${w.partyName + ' (' + w.city + ')'}"></option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Target Color Wash Recipe *</label>
+                            <input type="text" name="colorName" required placeholder="e.g. Medium Enzyme Bleach, Tinted Vintage, Raw Clean"
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Pieces Quantity *</label>
+                            <input type="number" name="piecesIn" value="80" min="1" required
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Special Wash Notes</label>
+                            <input type="text" name="notes" placeholder="Silicon softener, stone wash 45 mins..."
+                                   class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-hidden">
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button type="button" onclick="document.getElementById('modal-create-batch').classList.add('hidden')"
+                                    class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition">Cancel</button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-xs transition">Dispatch to Wash Plant</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer th:replace="~{layout/main :: footer}"></footer>
+</body>
+</html>

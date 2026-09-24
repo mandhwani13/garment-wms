@@ -46,6 +46,10 @@ public class SetBundle {
     @JoinColumn(name = "current_customer_id")
     private Customer currentCustomer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_location_id")
+    private Location currentLocation;
+
     @OneToMany(mappedBy = "parentSet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<SinglePiece> singlePieces = new ArrayList<>();
